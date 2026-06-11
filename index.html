@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Curate your personal collection of Impressionist and related artwork from the Art Institute of Chicago and Cleveland Museum of Art." />
+  <meta name="theme-color" content="#111111" />
+
+  <title>Impressionist Art Collection</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css?v=19" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <button class="header-brand" id="btn-home" aria-label="Go to home">
+      <div class="app-title">Impressionist Art Collection</div>
+      <div class="app-subtitle">Art Institute of Chicago (AIC) &middot; Cleveland Museum of Art (CMA)</div>
+    </button>
+
+    <nav aria-label="Main tabs">
+      <button class="tab-btn" data-tab="collection" aria-selected="false">My Collection</button>
+    </nav>
+
+    <div class="header-actions">
+      <button class="btn-icon" id="btn-import" aria-label="Import collection from JSON file">↑ Import</button>
+      <button class="btn-icon" id="btn-export" aria-label="Export collection as JSON file">↓ Export</button>
+    </div>
+  </div>
+</header>
+
+<main id="main-content" role="main" aria-live="polite">
+  <div class="loading">
+    <div class="spinner"></div>
+    <p>Loading artworks…</p>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <p>Artworks sourced from open-access collections:</p>
+    <div class="footer-sources">
+      <a href="https://www.artic.edu" target="_blank" rel="noopener">Art Institute of Chicago</a>
+      <span class="footer-divider">&middot;</span>
+      <a href="https://www.clevelandart.org" target="_blank" rel="noopener">Cleveland Museum of Art</a>
+    </div>
+    <p class="footer-note">Images and data provided via public APIs for personal, non-commercial use.</p>
+  </div>
+</footer>
+
+<div id="modal-root"></div>
+<script src="app.js?v=19"></script>
+<script src="seeds.js?v=19"></script>
+</body>
+</html>
