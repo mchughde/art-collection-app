@@ -1,10 +1,11 @@
-const CACHE_NAME = 'impressionist-art-v2';
+const CACHE_NAME = 'impressionist-art-v3';
+const BASE = self.registration.scope;
 const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/app.js',
-  '/styles.css',
-  '/manifest.json'
+  BASE,
+  BASE + 'index.html',
+  BASE + 'app.js',
+  BASE + 'styles.css',
+  BASE + 'manifest.json'
 ];
 
 self.addEventListener('install', event => {
