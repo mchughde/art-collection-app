@@ -1296,9 +1296,10 @@ function switchTab(tab) {
 function init() {
   loadCollection();
 
-  // Service worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister());
+    });
   }
 
   // Tab buttons
