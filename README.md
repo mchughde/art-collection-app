@@ -10,6 +10,45 @@ A personal PWA for curating Impressionist and related artworks from the Art Inst
 - Save artworks to your personal collection
 - Export and import your collection as a JSON file for backup or transfer between devices
 
+## Collection scope and data sources
+
+The app browses two open-access museum APIs. Neither API is filtered to Impressionism specifically — both return their broader collections, with period labels assigned client-side by the artwork's completion date.
+
+### Art Institute of Chicago (AIC)
+
+- **API:** `api.artic.edu/api/v1/artworks/search`
+- **Filter:** artworks with images, from departments matching painting, prints, drawing, Americas, or graphic arts
+- **Date filter:** completion date (`date_end`) in range 1820–1940 for browsing
+- **Period assignment:** based on AIC's own `date_end` field (a clean integer), fully deterministic
+
+### Cleveland Museum of Art (CMA)
+
+- **API:** `openaccess-api.clevelandart.org/api/artworks`
+- **Filter:** `type=Painting`, `has_image=1`
+- **Date filter:** `created_after` / `created_before` parameters on the CMA API
+- **Period assignment:** based on the last 4-digit year found in the `creation_date` string (e.g. "c. 1896–1908" → 1908)
+
+### Period boundaries
+
+Periods are assigned purely by year — not by the museums' own style classifications:
+
+| Period | Date range | AIC | CMA | Total artworks |
+|---|---|---|---|---|
+| **All periods** | **1820–1940** | **44,824** | **735** | **~45,559** |
+| Pre-Impressionism | 1820–1859 | 10,078 | 217 | 10,295 |
+| Early Impressionism | 1860–1879 | 5,322 | 290 | 5,612 |
+| High Impressionism | 1880–1885 | 1,480 | 54 | 1,534 |
+| Post-Impressionism | 1886–1899 | 5,840 | 129 | 5,969 |
+| Fauvism | 1900–1907 | 4,680 | 72 | 4,752 |
+| Cubism | 1908–1920 | 6,301 | 44 | 6,345 |
+| Early Modern | 1921–1940 | 11,123 | 36 | 11,159 |
+
+**Notes:**
+- "All periods" and the individual period totals differ by ~0.2% (107 artworks). This is because some CMA artworks have date spans that cross period boundaries (e.g. "c. 1896–1908") and are counted in two adjacent period buckets.
+- The lower bound of 1820 reflects the app's focus on 19th–early 20th century art. Pre-1820 works (ancient, medieval, Renaissance) are excluded.
+- The upper bound of 1940 marks the end of the Early Modern period. Post-1940 works appear only under "Other / Unknown".
+- AIC also holds far more works outside this date range; the keyword-free date filter means the AIC results include all departments and media, not just Impressionist painting.
+
 ## Pushing updates
 
 After making changes, run in Terminal:
