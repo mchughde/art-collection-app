@@ -179,10 +179,11 @@ async function fetchAic(page, query, limit = PAGE_SIZE, dateRange = null) {
   if (dateRange) {
     const filters = [
       { exists: { field: 'image_id' } },
-      { range: { date_end: { gte: dateRange.gte, lte: dateRange.lte } } }
+      { range: { date_end: dateRange.lte ? { gte: dateRange.gte, lte: dateRange.lte } : { gte: dateRange.gte } } }
     ];
-    const body = { query: { bool: { filter: filters } }, fields: AIC_FIELDS.split(','), limit, page };
-    if (query) body.q = query;
+    const boolQuery = { filter: filters };
+    if (query) boolQuery.must = [{ query_string: { query, default_operator: 'AND' } }];
+    const body = { query: { bool: boolQuery }, fields: AIC_FIELDS.split(','), limit, page };
     res = await fetch(`${AIC_BASE}/artworks/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
