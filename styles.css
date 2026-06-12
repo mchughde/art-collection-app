@@ -140,6 +140,19 @@ main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
 }
 .search-bar input[type="search"]:focus { border-color: var(--text); }
 
+.search-input-wrap { display: flex; align-items: center; }
+.search-input-wrap input[type="search"] { flex: 1; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.search-go-btn {
+  padding: 0.6rem 1rem;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.875rem;
+  border: 1px solid var(--accent);
+  border-left: none;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  white-space: nowrap;
+}
+
 .btn-primary {
   background: var(--accent);
   color: var(--accent-fg);

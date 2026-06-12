@@ -310,13 +310,16 @@ async function renderBrowse() {
     value: state.browseQuery,
     'aria-label': 'Search artworks'
   });
-  const debouncedSearch = debounce(val => {
-    state.browseQuery = val;
+  function doSearch() {
+    state.browseQuery = searchInput.value;
     state.browsePage = 1;
     renderBrowse();
-  }, 350);
-  searchInput.addEventListener('input', e => debouncedSearch(e.target.value));
+  }
+  searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
   inputWrap.appendChild(searchInput);
+  const searchBtn = el('button', { class: 'search-go-btn', 'aria-label': 'Search' }, 'Go');
+  searchBtn.addEventListener('click', doSearch);
+  inputWrap.appendChild(searchBtn);
   searchWrap.appendChild(inputWrap);
   main.appendChild(searchWrap);
 
@@ -336,7 +339,7 @@ async function renderBrowse() {
   });
   filterRow.appendChild(srcSel);
 
-  const BROWSE_PERIODS = ALL_PERIODS.filter(p => p !== 'Early Modern' && p !== 'Other / Unknown');
+  const BROWSE_PERIODS = ALL_PERIODS;
   const periodSel = el('select', { 'aria-label': 'Filter by period' });
   for (const p of ['all', ...BROWSE_PERIODS]) {
     const opt = el('option', { value: p }, p === 'all' ? 'All periods' : p);
@@ -466,12 +469,15 @@ function renderCollection() {
     value: state.collectionFilter.search,
     'aria-label': 'Search collection'
   });
-  const debouncedSearch = debounce(v => {
-    state.collectionFilter.search = v;
+  function doColSearch() {
+    state.collectionFilter.search = searchInput.value;
     renderCollection();
-  }, 250);
-  searchInput.addEventListener('input', e => debouncedSearch(e.target.value));
+  }
+  searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doColSearch(); });
   inputWrap.appendChild(searchInput);
+  const searchBtn = el('button', { class: 'search-go-btn', 'aria-label': 'Search' }, 'Go');
+  searchBtn.addEventListener('click', doColSearch);
+  inputWrap.appendChild(searchBtn);
   searchWrap.appendChild(inputWrap);
   main.appendChild(searchWrap);
 
