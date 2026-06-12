@@ -1,4 +1,4 @@
-const CACHE_NAME = 'impressionist-art-v3';
+const CACHE_NAME = 'impressionist-art-v4';
 const BASE = self.registration.scope;
 const APP_SHELL = [
   BASE,

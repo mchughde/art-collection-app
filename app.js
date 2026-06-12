@@ -182,7 +182,7 @@ async function fetchAic(page, query, limit = PAGE_SIZE, dateRange = null) {
       { range: { date_end: dateRange.lte ? { gte: dateRange.gte, lte: dateRange.lte } : { gte: dateRange.gte } } }
     ];
     const boolQuery = { filter: filters };
-    if (query) boolQuery.must = [{ query_string: { query, default_operator: 'AND' } }];
+    if (query) boolQuery.must = [{ multi_match: { query, fields: ['title', 'artist_title'], operator: 'and' } }];
     const body = { query: { bool: boolQuery }, fields: AIC_FIELDS.split(','), limit, page };
     res = await fetch(`${AIC_BASE}/artworks/search`, {
       method: 'POST',
@@ -219,7 +219,16 @@ async function fetchCma(page, query, limit = PAGE_SIZE, dateRange = null) {
   const res = await fetch(`${CMA_BASE}/artworks/?${params}`);
   if (!res.ok) throw new Error('CMA API error');
   const json = await res.json();
-  const artworks = (json.data || []).filter(a => a.images && a.images.web && a.images.web.url);
+  let artworks = (json.data || []).filter(a => a.images && a.images.web && a.images.web.url);
+  // CMA has no field-specific search — filter client-side to title/artist only
+  if (query) {
+    const q = query.toLowerCase();
+    artworks = artworks.filter(a => {
+      const title = (a.title || '').toLowerCase();
+      const artist = (a.creators || []).map(c => (c.description || c.name || '')).join(' ').toLowerCase();
+      return title.includes(q) || artist.includes(q);
+    });
+  }
   const total = json.info ? json.info.total : artworks.length;
   return {
     artworks: artworks.map(normalizeCma),
