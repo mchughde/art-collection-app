@@ -80,7 +80,7 @@ const ALL_PERIODS = [
 
 // Date ranges for server-side filtering (inclusive). Other / Unknown has no range.
 const PERIOD_RANGES = {
-  'Pre-Impressionism':   { gte: 1,    lte: 1859 },
+  'Pre-Impressionism':   { gte: 1820, lte: 1859 },
   'Early Impressionism': { gte: 1860, lte: 1879 },
   'High Impressionism':  { gte: 1880, lte: 1885 },
   'Post-Impressionism':  { gte: 1886, lte: 1899 },
@@ -441,16 +441,21 @@ async function renderBrowse() {
         artworks = raw.slice(start, start + CLIENT_PAGE_SIZE);
       }
     } else {
-      // Server-side pagination
+      // "All periods" — use the same date-range mechanism as individual periods,
+      // spanning 1820 onwards so the total is the true union of all period buckets.
+      const allRange = { gte: 1820, lte: 1940 };
       const page = state.browsePage;
       if (state.browseSource === 'aic') {
-        const r = await fetchAic(page, query);
+        const r = await fetchAic(page, query, PAGE_SIZE, allRange);
         artworks = r.artworks; totalPages = r.totalPages;
       } else if (state.browseSource === 'cma') {
-        const r = await fetchCma(page, query);
+        const r = await fetchCma(page, query, PAGE_SIZE, allRange);
         artworks = r.artworks; totalPages = r.totalPages;
       } else {
-        const [aicR, cmaR] = await Promise.allSettled([fetchAic(page, query), fetchCma(page, query)]);
+        const [aicR, cmaR] = await Promise.allSettled([
+          fetchAic(page, query, PAGE_SIZE, allRange),
+          fetchCma(page, query, PAGE_SIZE, allRange)
+        ]);
         const aicArt = aicR.status === 'fulfilled' ? aicR.value.artworks : [];
         const cmaArt = cmaR.status === 'fulfilled' ? cmaR.value.artworks : [];
         const aicPages = aicR.status === 'fulfilled' ? aicR.value.totalPages : 1;
@@ -460,7 +465,7 @@ async function renderBrowse() {
           if (i < aicArt.length) artworks.push(aicArt[i]);
           if (i < cmaArt.length) artworks.push(cmaArt[i]);
         }
-        totalPages = Math.min(aicPages, cmaPages);
+        totalPages = Math.max(aicPages, cmaPages);
       }
     }
 
