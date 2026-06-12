@@ -78,6 +78,17 @@ const ALL_PERIODS = [
   'Other / Unknown'
 ];
 
+// Date ranges for server-side filtering (inclusive). Other / Unknown has no range.
+const PERIOD_RANGES = {
+  'Pre-Impressionism':   { gte: 1,    lte: 1859 },
+  'Early Impressionism': { gte: 1860, lte: 1879 },
+  'High Impressionism':  { gte: 1880, lte: 1885 },
+  'Post-Impressionism':  { gte: 1886, lte: 1899 },
+  'Fauvism':             { gte: 1900, lte: 1907 },
+  'Cubism':              { gte: 1908, lte: 1920 },
+  'Early Modern':        { gte: 1921, lte: 1940 },
+};
+
 function assignPeriod(year) {
   if (!year || isNaN(year)) return 'Other / Unknown';
   year = Number(year);
@@ -154,17 +165,25 @@ function normalizeCma(raw) {
 }
 
 // ===== API calls =====
-async function fetchAic(page, query, limit = PAGE_SIZE) {
-  // Always use the search endpoint so we can filter by artwork type
-  const q = query || 'impressionism painting';
-  const params = new URLSearchParams({
-    q,
-    fields: AIC_FIELDS,
-    limit,
-    page
-  });
-  const url = `${AIC_BASE}/artworks/search?${params}`;
-  const res = await fetch(url);
+async function fetchAic(page, query, limit = PAGE_SIZE, dateRange = null) {
+  let res;
+  if (dateRange) {
+    const filters = [
+      { exists: { field: 'image_id' } },
+      { range: { date_end: { gte: dateRange.gte, lte: dateRange.lte } } }
+    ];
+    const body = { query: { bool: { filter: filters } }, fields: AIC_FIELDS.split(','), limit, page };
+    if (query) body.q = query;
+    res = await fetch(`${AIC_BASE}/artworks/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } else {
+    const q = query || 'impressionism painting';
+    const params = new URLSearchParams({ q, fields: AIC_FIELDS, limit, page });
+    res = await fetch(`${AIC_BASE}/artworks/search?${params}`);
+  }
   if (!res.ok) throw new Error('AIC API error');
   const json = await res.json();
   const artworks = (json.data || []).filter(a =>
@@ -174,26 +193,27 @@ async function fetchAic(page, query, limit = PAGE_SIZE) {
   );
   return {
     artworks: artworks.map(normalizeAic),
-    totalPages: json.pagination ? (json.pagination.total_pages || Math.ceil(json.pagination.total / PAGE_SIZE)) : 1
+    totalPages: json.pagination ? Math.ceil(json.pagination.total / limit) : 1
   };
 }
 
-async function fetchCma(page, query, limit = PAGE_SIZE) {
+async function fetchCma(page, query, limit = PAGE_SIZE, dateRange = null) {
   const skip = (page - 1) * limit;
-  let url;
-  if (query) {
-    url = `${CMA_BASE}/artworks/?q=${encodeURIComponent(query)}&type=Painting&limit=${limit}&skip=${skip}`;
-  } else {
-    url = `${CMA_BASE}/artworks/?type=Painting&limit=${limit}&skip=${skip}`;
+  const params = new URLSearchParams({ type: 'Painting', has_image: '1', limit, skip });
+  if (query) params.set('q', query);
+  if (dateRange) {
+    // CMA created_after/created_before are exclusive, so offset by 1
+    params.set('created_after', dateRange.gte - 1);
+    params.set('created_before', dateRange.lte + 1);
   }
-  const res = await fetch(url);
+  const res = await fetch(`${CMA_BASE}/artworks/?${params}`);
   if (!res.ok) throw new Error('CMA API error');
   const json = await res.json();
   const artworks = (json.data || []).filter(a => a.images && a.images.web && a.images.web.url);
   const total = json.info ? json.info.total : artworks.length;
   return {
     artworks: artworks.map(normalizeCma),
-    totalPages: Math.ceil(total / PAGE_SIZE)
+    totalPages: Math.ceil(total / limit)
   };
 }
 
@@ -368,35 +388,58 @@ async function renderBrowse() {
     let artworks = [], totalPages = 1;
 
     if (periodActive) {
-      // Fetch a large batch, filter client-side, paginate client-side
-      const BATCH = 100;
-      const fetchLarge = async (fn) => {
-        const r = await fn(1, query, BATCH);
-        return r.artworks;
-      };
-      let raw = [];
-      if (state.browseSource === 'aic') {
-        raw = await fetchLarge((p, q, lim) => fetchAic(p, q, lim));
-      } else if (state.browseSource === 'cma') {
-        raw = await fetchLarge((p, q, lim) => fetchCma(p, q, lim));
-      } else {
-        const [aicR, cmaR] = await Promise.allSettled([
-          fetchAic(1, query, BATCH), fetchCma(1, query, BATCH)
-        ]);
-        const aicArt = aicR.status === 'fulfilled' ? aicR.value.artworks : [];
-        const cmaArt = cmaR.status === 'fulfilled' ? cmaR.value.artworks : [];
-        const len = Math.max(aicArt.length, cmaArt.length);
-        for (let i = 0; i < len; i++) {
-          if (i < aicArt.length) raw.push(aicArt[i]);
-          if (i < cmaArt.length) raw.push(cmaArt[i]);
+      const range = PERIOD_RANGES[state.browsePeriod] || null;
+      const page = state.browsePage;
+
+      if (range) {
+        // Server-side date range filtering — full collection pagination
+        if (state.browseSource === 'aic') {
+          const r = await fetchAic(page, query, PAGE_SIZE, range);
+          artworks = r.artworks; totalPages = r.totalPages;
+        } else if (state.browseSource === 'cma') {
+          const r = await fetchCma(page, query, PAGE_SIZE, range);
+          artworks = r.artworks; totalPages = r.totalPages;
+        } else {
+          const [aicR, cmaR] = await Promise.allSettled([
+            fetchAic(page, query, PAGE_SIZE, range),
+            fetchCma(page, query, PAGE_SIZE, range)
+          ]);
+          const aicArt = aicR.status === 'fulfilled' ? aicR.value.artworks : [];
+          const cmaArt = cmaR.status === 'fulfilled' ? cmaR.value.artworks : [];
+          const aicPages = aicR.status === 'fulfilled' ? aicR.value.totalPages : 1;
+          const cmaPages = cmaR.status === 'fulfilled' ? cmaR.value.totalPages : 1;
+          const len = Math.max(aicArt.length, cmaArt.length);
+          for (let i = 0; i < len; i++) {
+            if (i < aicArt.length) artworks.push(aicArt[i]);
+            if (i < cmaArt.length) artworks.push(cmaArt[i]);
+          }
+          totalPages = Math.max(aicPages, cmaPages);
         }
+      } else {
+        // Other / Unknown — no date or post-1940: fetch a batch and filter client-side
+        const BATCH = 100;
+        const CLIENT_PAGE_SIZE = 12;
+        let raw = [];
+        if (state.browseSource === 'aic') {
+          raw = (await fetchAic(1, query, BATCH)).artworks;
+        } else if (state.browseSource === 'cma') {
+          raw = (await fetchCma(1, query, BATCH)).artworks;
+        } else {
+          const [aicR, cmaR] = await Promise.allSettled([fetchAic(1, query, BATCH), fetchCma(1, query, BATCH)]);
+          const aicArt = aicR.status === 'fulfilled' ? aicR.value.artworks : [];
+          const cmaArt = cmaR.status === 'fulfilled' ? cmaR.value.artworks : [];
+          const len = Math.max(aicArt.length, cmaArt.length);
+          for (let i = 0; i < len; i++) {
+            if (i < aicArt.length) raw.push(aicArt[i]);
+            if (i < cmaArt.length) raw.push(cmaArt[i]);
+          }
+        }
+        raw = raw.filter(a => a.period === 'Other / Unknown');
+        totalPages = Math.max(1, Math.ceil(raw.length / CLIENT_PAGE_SIZE));
+        if (state.browsePage > totalPages) state.browsePage = 1;
+        const start = (state.browsePage - 1) * CLIENT_PAGE_SIZE;
+        artworks = raw.slice(start, start + CLIENT_PAGE_SIZE);
       }
-      artworks = raw.filter(a => a.period === state.browsePeriod);
-      totalPages = Math.max(1, Math.ceil(artworks.length / CLIENT_PAGE_SIZE));
-      // Clamp page within valid range
-      if (state.browsePage > totalPages) state.browsePage = 1;
-      const start = (state.browsePage - 1) * CLIENT_PAGE_SIZE;
-      artworks = artworks.slice(start, start + CLIENT_PAGE_SIZE);
     } else {
       // Server-side pagination
       const page = state.browsePage;
