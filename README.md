@@ -56,8 +56,8 @@ Periods are assigned purely by year — not by the museums' own style classifica
 **Notes:**
 - "All periods" and the individual period totals differ by ~0.2% (107 artworks). This is because some CMA artworks have date spans that cross period boundaries (e.g. "c. 1896–1908") and are counted in two adjacent period buckets.
 - The lower bound of 1820 reflects the app's focus on 19th–early 20th century art. Pre-1820 works (ancient, medieval, Renaissance) are excluded.
-- The upper bound of 1940 marks the end of the Early Modern period. Post-1940 works appear only under "Other / Unknown".
-- AIC also holds far more works outside this date range; the keyword-free date filter means the AIC results include all departments and media, not just Impressionist painting.
+- The upper bound of 1940 marks the end of the Early Modern period. Works outside the 1820–1940 window are not browseable.
+- AIC holds far more works outside this date range; the date filter means results include all departments and media, not just Impressionist painting.
 
 ## Pushing updates
 

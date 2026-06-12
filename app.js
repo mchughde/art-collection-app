@@ -75,7 +75,6 @@ const ALL_PERIODS = [
   'Fauvism',
   'Cubism',
   'Early Modern',
-  'Other / Unknown'
 ];
 
 // Date ranges for server-side filtering (inclusive). Other / Unknown has no range.
@@ -415,30 +414,6 @@ async function renderBrowse() {
           }
           totalPages = Math.max(aicPages, cmaPages);
         }
-      } else {
-        // Other / Unknown — no date or post-1940: fetch a batch and filter client-side
-        const BATCH = 100;
-        const CLIENT_PAGE_SIZE = 12;
-        let raw = [];
-        if (state.browseSource === 'aic') {
-          raw = (await fetchAic(1, query, BATCH)).artworks;
-        } else if (state.browseSource === 'cma') {
-          raw = (await fetchCma(1, query, BATCH)).artworks;
-        } else {
-          const [aicR, cmaR] = await Promise.allSettled([fetchAic(1, query, BATCH), fetchCma(1, query, BATCH)]);
-          const aicArt = aicR.status === 'fulfilled' ? aicR.value.artworks : [];
-          const cmaArt = cmaR.status === 'fulfilled' ? cmaR.value.artworks : [];
-          const len = Math.max(aicArt.length, cmaArt.length);
-          for (let i = 0; i < len; i++) {
-            if (i < aicArt.length) raw.push(aicArt[i]);
-            if (i < cmaArt.length) raw.push(cmaArt[i]);
-          }
-        }
-        raw = raw.filter(a => a.period === 'Other / Unknown');
-        totalPages = Math.max(1, Math.ceil(raw.length / CLIENT_PAGE_SIZE));
-        if (state.browsePage > totalPages) state.browsePage = 1;
-        const start = (state.browsePage - 1) * CLIENT_PAGE_SIZE;
-        artworks = raw.slice(start, start + CLIENT_PAGE_SIZE);
       }
     } else {
       // "All periods" — use the same date-range mechanism as individual periods,
