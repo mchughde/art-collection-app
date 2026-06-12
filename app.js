@@ -77,6 +77,16 @@ const ALL_PERIODS = [
   'Early Modern',
 ];
 
+const PERIOD_LABELS = {
+  'Pre-Impressionism':   'Pre-Impressionism (1820–1859)',
+  'Early Impressionism': 'Early Impressionism (1860–1879)',
+  'High Impressionism':  'High Impressionism (1880–1885)',
+  'Post-Impressionism':  'Post-Impressionism (1886–1899)',
+  'Fauvism':             'Fauvism (1900–1907)',
+  'Cubism':              'Cubism (1908–1920)',
+  'Early Modern':        'Early Modern (1921–1940)',
+};
+
 // Date ranges for server-side filtering (inclusive). Other / Unknown has no range.
 const PERIOD_RANGES = {
   'Pre-Impressionism':   { gte: 1820, lte: 1859 },
@@ -361,7 +371,7 @@ async function renderBrowse() {
   const BROWSE_PERIODS = ALL_PERIODS;
   const periodSel = el('select', { 'aria-label': 'Filter by period' });
   for (const p of ['all', ...BROWSE_PERIODS]) {
-    const opt = el('option', { value: p }, p === 'all' ? 'All periods' : p);
+    const opt = el('option', { value: p }, p === 'all' ? 'All periods (1820–1940)' : (PERIOD_LABELS[p] || p));
     if (state.browsePeriod === p) opt.selected = true;
     periodSel.appendChild(opt);
   }
@@ -550,7 +560,7 @@ function buildFilterBar() {
   const usedPeriods = getUsedPeriods();
   const periodSel = el('select', { 'aria-label': 'Filter by period' });
   for (const p of ['all', ...usedPeriods]) {
-    const opt = el('option', { value: p }, p === 'all' ? 'All periods' : p);
+    const opt = el('option', { value: p }, p === 'all' ? 'All periods' : (PERIOD_LABELS[p] || p));
     if (state.collectionFilter.period === p) opt.selected = true;
     periodSel.appendChild(opt);
   }
