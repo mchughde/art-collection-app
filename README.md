@@ -6,8 +6,10 @@ A personal PWA for curating Impressionist and related artworks from the Art Inst
 
 ## What it does
 
-- Browse and search artworks from two open-access museum collections
-- Save artworks to your personal collection
+- Browse artworks from two open-access museum collections, filtered by museum and date-based period (e.g. "Post-Impressionism (1886–1899)")
+- Search by title, artist, or subject within the browse view
+- Save artworks to your personal collection with notes, tags, themes, and favourites
+- Filter and sort your saved collection
 - Export and import your collection as a JSON file for backup or transfer between devices
 
 ## Design philosophy
@@ -40,7 +42,7 @@ The app browses two open-access museum APIs. Neither API is filtered to Impressi
 
 ### Period boundaries
 
-Periods are assigned purely by year — not by the museums' own style classifications:
+Periods are assigned purely by year — not by the museums' own style classifications. The date span is shown alongside each period name in the app's dropdown menus:
 
 | Period | Date range | AIC | CMA | Total artworks |
 |---|---|---|---|---|
