@@ -10,6 +10,16 @@ A personal PWA for curating Impressionist and related artworks from the Art Inst
 - Save artworks to your personal collection
 - Export and import your collection as a JSON file for backup or transfer between devices
 
+## Design philosophy
+
+This is a personal curation tool, not an art-historical reference. The goal is to make it easier to find and save paintings that are personally appealing, working across two large open-access museum collections.
+
+The period labels — Pre-Impressionism, Impressionism, Post-Impressionism, and so on — are used as **probability filters**, not precise classifications. Selecting "Post-Impressionism" doesn't guarantee every result is a Post-Impressionist work; it means that within those years (1886–1899), the density of the kinds of paintings worth browsing is higher than it would be across the full collection. The label narrows the field to a plausible neighbourhood; personal taste does the rest.
+
+Each period bucket will contain a broad mix of styles — academic portraits, landscapes, genre scenes, and decorative works sit alongside the canonical Impressionist and Post-Impressionist paintings. That's an honest reflection of what museums actually hold from those years, and it's how the two source APIs work: neither is filtered to Impressionism specifically. The personal collection layer — saving, tagging, notes, and favourites — is where individual curatorial choices live.
+
+This approach is consistent with how cross-institutional art aggregators like Europeana handle the same problem: date ranges are the one field that exists in some form across all institutions, making them the most reliable basis for a consistent browsing experience even when style classifications vary or are absent entirely.
+
 ## Collection scope and data sources
 
 The app browses two open-access museum APIs. Neither API is filtered to Impressionism specifically — both return their broader collections, with period labels assigned client-side by the artwork's completion date.
