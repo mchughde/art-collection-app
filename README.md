@@ -66,7 +66,7 @@ Periods are assigned purely by year — not by the museums' own style classifica
 After making changes, run in Terminal:
 
 ```bash
-cd "/Users/diannemchugh/Library/CloudStorage/GoogleDrive-mchughde@gmail.com/My Drive/Art Collection app"
+cd ~/Developer/art-collection-app
 git add -A
 git commit -m "Describe your change here"
 git push https://mchughde@github.com/mchughde/art-collection-app.git main
